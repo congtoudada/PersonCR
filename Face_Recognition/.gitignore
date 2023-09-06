@@ -1,0 +1,21 @@
+# git rm -r --cached .
+# git add .
+# git commit -m 'update .gitignore'
+
+__pycache__/
+*.py[cod]
+.idea/
+docker/codes/
+build/
+output/
+.ipynb_checkpoints/
+.DS_Store
+pip
+eth.yaml
+*.whl
+*.so
+core/feature/weight
+
+
+
+
