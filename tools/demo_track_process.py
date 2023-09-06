@@ -17,7 +17,6 @@ from tools.lzc.yaml_helper import read_yaml
 from tools.lzc.cam_process import *
 from tools.lzc.sql_process import *
 from tools.lzc.face_process import *
-from tools.lzc.cam_process_pool import *
 from multiprocessing import Process, Manager, Pipe, current_process
 
 # from pynput import keyboard
