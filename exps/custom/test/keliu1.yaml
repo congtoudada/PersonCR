@@ -55,7 +55,7 @@ per_img_interval: 25
 args1:
   expn: keliu
   # path: rtsp://admin:ADMIN123@180.136.11.17:554/h264/ch1/main/av_stream_keliu1
-  path: assets/keliu/keliu1_3.mp4 # 取流地址 # ADMIN123
+  path: assets/keliu/keliu1.mp4 # 取流地址 # ADMIN123
   save_result: True # 是否存储视频！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
   exp_file: exps/custom/yolox_s_keliu.py # yolox配置文件存储路径
   ckpt: pretrained/keliu/best_ckpt.pth

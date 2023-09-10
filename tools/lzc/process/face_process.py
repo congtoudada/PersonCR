@@ -6,7 +6,6 @@ import time
 from loguru import logger
 from multiprocessing import Process, current_process
 
-from facenet.facenet import Facenet
 # from facenet.mypredict import mypredict
 from tools.lzc.my_logger import log_config
 from Face_Recognition import FaceModel, configs, my_register
@@ -33,23 +32,27 @@ def face_reboot(face_update_path, main_id, process_id, face_model=None):
         face_model.faceReg.update()
     return face_model
 
-
-def face_process(process_id, p_qface, p_qsql, faceEvent, esc_event, main_yaml):
+"""
+process_id: 自定义进程id
+faceQueue: 人脸消息队列
+qresult_list: 存储人脸结果的消息队列列表
+faceEvent: 人脸进程初始化事件
+escEvent: 退出事件
+main_yaml: 主配置文件
+"""
+def face_process(process_id, faceQueue, qresult_list, faceEvent, escEvent, main_yaml):
     pname = f'[ {os.getpid()}:face_process {process_id} ]'
     logger.info(f'{pname} launch!')
-    print(f'{pname} launch!')
-    log_config(main_id=main_yaml['main_id'])
+
+    # 使用spawn会创建全新进程，需重新配置日志
+    log_config(main_yaml)
 
     sleep_time = main_yaml['face']['sleep']
-    is_debug = main_yaml['is_debug']
-    per_img_count = main_yaml['face']['per_img_count']  # 一个人最多处理几张候选图
-    # database = main_yaml['face']['database']
     main_id = main_yaml['main_id']
     face_update_path = main_yaml['face']['update_path']
 
-    if is_debug:
-        print(f"{pname} 算法首次启动，更新人脸特征库")
-        logger.info(f"{pname} 算法首次启动，更新人脸特征库")
+    logger.info(f"{pname} 算法首次启动，更新人脸特征库")
+
     face_model = face_reboot(face_update_path, main_id, process_id, face_model=None)  # 加载人脸识别模型
 
     if faceEvent is not None:
@@ -57,13 +60,13 @@ def face_process(process_id, p_qface, p_qsql, faceEvent, esc_event, main_yaml):
 
     try:
         while True:
-            if not p_qface.empty():
+            if not faceQueue.empty():
                 # print(f"face len: {len(p_qface)}")
                 if not os.path.exists(face_update_path):  # 特征库存在才进行检测
                     time.sleep(sleep_time)
                     continue
 
-                val_dict = p_qface.get()
+                val_dict = faceQueue.get()
                 # 初始化一些所需变量
                 # print(f"val_dict: {val_dict}")
                 best_save_path = val_dict['record_photo_url']
@@ -116,9 +119,3 @@ def face_process(process_id, p_qface, p_qsql, faceEvent, esc_event, main_yaml):
         print(f"{pname} Error:{e}")
         logger.error(f"{pname} Error:{e}")
 
-
-def start_face_process(p_qface, p_qsql, faceEvent, esc_event, args, main_yaml):
-    pface = Process(target=face_process, name="face_process",
-                    args=(p_qface, p_qsql, faceEvent, esc_event, args, main_yaml))
-    pface.start()
-    return pface

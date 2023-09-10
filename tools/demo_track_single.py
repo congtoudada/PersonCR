@@ -1,21 +1,11 @@
 import argparse
 import multiprocessing
-import os
-import sys
-import threading
-
-# import termios
-# import tty
-import time
 
 import cv2
 from loguru import logger
 from tools.lzc.yaml_helper import read_yaml
 from tools.lzc.cam_single import single_process
-from multiprocessing import Process, Manager, Pipe, current_process
-# from tools.lzc.face_process import start_face_process
-from tools.lzc.sql_process import start_sql_process
-# from pynput import keyboard
+from multiprocessing import Manager
 
 # IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
 
@@ -101,25 +91,14 @@ def make_parser():
     parser.add_argument("--cam_yaml", type=str, default="renlian1", help="camera yaml path")
     return parser
 
-# 获取键盘输入
-# def get_key():
-#     fd = sys.stdin.fileno()
-#     old_settings = termios.tcgetattr(fd)
-#     try:
-#         tty.setraw(sys.stdin.fileno())
-#         ch = sys.stdin.read(1)
-#     finally:
-#         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-#     return ch
-
-def key_linster(esc_event):
-    # 监听键盘输入
-    while True:
-        key = get_key()
-        if key == 'q':  # 如果按下'q'键则退出循环
-            esc_event.set()
-            print("Press Q, Algorithm will be over!")
-            break
+# def key_linster(esc_event):
+#     # 监听键盘输入
+#     while True:
+#         key = get_key()
+#         if key == 'q':  # 如果按下'q'键则退出循环
+#             esc_event.set()
+#             print("Press Q, Algorithm will be over!")
+#             break
 
 if __name__ == "__main__":
     # 解析args
@@ -130,7 +109,7 @@ if __name__ == "__main__":
     cam_yaml = read_yaml(cam_yaml_path)
     run_mode = cam_yaml['run_mode']
     # 设置进程开启方式
-    multiprocessing.set_start_method('spawn')
+    # multiprocessing.set_start_method('spawn')
 
 
     # # 生成日志信息

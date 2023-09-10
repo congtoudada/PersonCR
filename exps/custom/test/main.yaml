@@ -1,14 +1,8 @@
 # 全局配置
+#is_debug: True # 是否启用DEBUG模式
 is_debug: True # 是否启用DEBUG模式
 is_args: True # 是否启用args重载。启用后yaml配置会覆盖args参数
 
-## 客流计数配置文件
-#keliu: []
-#  # - exps/custom/keliu1.yaml
-#
-## 人脸识别配置文件
-#renlian:
-#  - exps/custom/renlian1.yaml
 
 # 人脸识别: 预测阈值
 face:

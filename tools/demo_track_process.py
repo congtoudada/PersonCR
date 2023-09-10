@@ -1,27 +1,11 @@
-import argparse
 import multiprocessing
-import os
-import pickle
-import sys
-import threading
-import time
 
-# import termios
-# import tty
-# import time
-# import signal
-
-import cv2
-from loguru import logger
 from tools.lzc.yaml_helper import read_yaml
 from tools.lzc.cam_process import *
-from tools.lzc.sql_process import *
-from tools.lzc.face_process import *
-from multiprocessing import Process, Manager, Pipe, current_process
-
-# from pynput import keyboard
-
-# IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
+from tools.lzc.process.sql_process import *
+from tools.lzc.process.face_process import *
+from multiprocessing import Process, Manager
+from tools.lzc.my_logger import log_config
 
 def make_parser():
     parser = argparse.ArgumentParser("ByteTrack Demo!")
@@ -98,24 +82,52 @@ def make_parser():
     parser.add_argument("--mot20", dest="mot20", default=False, action="store_true", help="test mot20.")
 
     # ----------------------------- 自定义参数 -----------------------------
-    parser.add_argument("--main", type=str, default="main_process1", help="main yaml path")
+    parser.add_argument("--main", type=str, default="main1", help="main yaml path")
     return parser
 
-if __name__ == "__main__":
-    # 配置相关
+def init_log(main_yaml):
+    localtime = time.localtime()
+    begin_time_str = time.strftime('%Y-%m-%d', localtime)
+    # 每2个月清理1个月的日志
+    now_month = int(begin_time_str.split('-')[1])
+    # 使用os.walk()遍历文件夹
+    for root, dirs, files in os.walk("logs"):
+        for filename in files:
+            file_path = os.path.join(root, filename)
+            month = int(file_path.split('-')[1])
+
+            diff = now_month - month
+            if diff < 0:
+                diff = now_month + 12 - month
+
+            if diff >= 2:
+                os.remove(file_path)
+
+    log_config(main_yaml)
+
+    logger.info(f"{begin_time_str}: Algorithm Running...")
+
+def run():
     # 解析args
     args = make_parser().parse_args()
-    # 加载yaml配置
+
+    # 加载yaml主配置
+    main_yaml_template = read_yaml(file=f"exps/custom/template/main_template.yaml")
     main_yaml = read_yaml(file=f"exps/custom/{args.main}.yaml")
-    # 生成日志信息
-    logger.remove()  # 避免打印到控制台
-    log_path = os.path.join("logs", f"main_process{main_yaml['main_id']}.log")
-    if os.path.exists(log_path):
-        os.remove(log_path)
-    logger.add(sink=log_path, rotation="100 MB")  # 每100MB重新写
-    print(f"logs will save in: {log_path}")
-    begin_time_str = time.strftime('%Y_%m_%d %H:%M:%S', time.localtime())
-    print(f"{begin_time_str}: Algorithm Running...")
+    # 使用main_yaml值去更新main_yaml_template
+    main_yaml_template.update((key, value) for key, value in main_yaml.items() if key in main_yaml_template)
+    main_yaml: dict = main_yaml_template
+
+    # 加载日志配置
+    if main_yaml.get("enable_log"):
+        logger.remove()  # 避免打印到控制台
+        log_path = os.path.join("logs", f"main_process{main_yaml['main_id']}.log")
+        if os.path.exists(log_path):
+            os.remove(log_path)
+        logger.add(sink=log_path, rotation="100 MB")  # 每100MB重新写
+        print(f"logs will save in: {log_path}")
+        begin_time_str = time.strftime('%Y_%m_%d %H:%M:%S', time.localtime())
+        print(f"{begin_time_str}: Algorithm Running...")
 
     # 进程相关
     # 设置进程开启方式
@@ -153,7 +165,7 @@ if __name__ == "__main__":
     for i in range(sql_count):
         # time.sleep(3) # 避免并发过高
         sql_id = i + 1
-        sql_name = f"sql_process { sql_id }"
+        sql_name = f"sql_process {sql_id}"
         Process(target=sql_process,
                 args=(sql_id, sql_queue_list[i], sqlEvent if i == sql_count - 1 else None, esc_event, main_yaml),
                 name=sql_name,
@@ -201,7 +213,7 @@ if __name__ == "__main__":
 
     while True:
         time.sleep(1)
-        if not os.path.exists(main_path): # 检测系统运行
+        if not os.path.exists(main_path):  # 检测系统运行
             break
 
     if not esc_event.is_set():
@@ -220,3 +232,137 @@ if __name__ == "__main__":
 
     print("程序结束！")
     sys.exit(0)
+
+# 日志测试
+def test1_log():
+    # 解析args
+    args = make_parser().parse_args()
+
+    # 加载yaml主配置
+    main_yaml_template = read_yaml(file=f"exps/custom/template/main_template.yaml")
+    main_yaml = read_yaml(file=f"exps/custom/{args.main}.yaml")
+    # 使用main_yaml值去更新main_yaml_template
+    main_yaml_template.update((key, value) for key, value in main_yaml.items() if key in main_yaml_template)
+    main_yaml: dict = main_yaml_template
+
+    # 初始化日志模块
+    init_log(main_yaml)
+
+def test2_init_queue():
+    # ---------- 配置相关 ----------
+    # 解析args
+    args = make_parser().parse_args()
+    # 加载yaml主配置
+    main_yaml_template = read_yaml(file=f"exps/custom/template/main_template.yaml")
+    main_yaml = read_yaml(file=f"exps/custom/{args.main}.yaml")
+    # 使用main_yaml值去更新main_yaml_template(不存在则添加，存在则更新)
+    main_yaml_template.update(main_yaml)
+    main_yaml: dict = main_yaml_template
+
+    # ---------- 进程相关 ----------
+    # 设置进程开启方式
+    # multiprocessing.set_start_method('spawn')
+    # 创建事件对象
+    esc_event = Manager().Event()  # 程序终止事件
+    sqlEvent = Manager().Event()  # 数据库初始化完成事件
+    faceEvent = Manager().Event()  # 人脸识别模块初始化完成事件
+    # 创建进程池（方便管理）
+    cam_list = main_yaml['cam_list']
+    cam_count = len(cam_list)
+    face_count = main_yaml['face']['count']
+    sql_count = main_yaml['database']['count']
+    process_count = cam_count * 2 + face_count + sql_count  # 一个相机对应两个进程（读视频流 和 处理视频流）
+    logger.info(f"进程数量: {process_count} 相机:{cam_count}*2 人脸识别:{face_count} 数据库:{sql_count}")
+
+    # 创建需要的消息队列
+    # 数据库消息队列
+    sql_queue_list = []
+    for i in range(sql_count):
+        sql_queue_list.append(Manager().Queue(main_yaml['database']['capacity']))
+    # 人脸识别消息队列
+    face_queue_list = []
+    for i in range(face_count):
+        face_queue_list.append(Manager().Queue(main_yaml['face']['capacity']))
+    # 相机消息消息队列
+    cam_interval = main_yaml['cam_interval']  # 每n秒启动一台相机
+    frame_queue_capacity = main_yaml['frame_queue_capacity'] # 视频帧缓存队列上限
+    qframe_list = [] # 存放读取的视频帧
+    qface_list = [] # 存放人脸识别返回的结果
+    cam_event_list = [] # 用于初始化读/写视频流进程
+    for i in range(cam_count):
+        qframe_list.append(Manager().Queue(frame_queue_capacity))
+        qface_list.append(Manager().Queue(frame_queue_capacity))
+        cam_event_list.append(Manager().Event())
+
+    logger.info("init over!")
+
+def test3_init_database():
+    # ---------- 配置相关 ----------
+    # 解析args
+    args = make_parser().parse_args()
+    # 加载yaml主配置
+    main_yaml_template = read_yaml(file=f"exps/custom/template/main_template.yaml")
+    main_yaml = read_yaml(file=f"exps/custom/{args.main}.yaml")
+    # 使用main_yaml值去更新main_yaml_template(不存在则添加，存在则更新)
+    main_yaml_template.update(main_yaml)
+    main_yaml: dict = main_yaml_template
+
+    # 初始化日志模块
+    # init_log(main_yaml)
+
+    # ---------- 进程相关 ----------
+    # 设置进程开启方式
+    # multiprocessing.set_start_method('spawn')
+    # 创建事件对象
+    escEvent = Manager().Event()  # 程序终止事件
+    sqlEvent = Manager().Event()  # 数据库初始化完成事件
+    faceEvent = Manager().Event()  # 人脸识别模块初始化完成事件
+    # 创建进程池（方便管理）
+    cam_list = main_yaml['cam_list']
+    cam_count = len(cam_list)
+    face_count = main_yaml['face']['count']
+    sql_count = main_yaml['database']['count']
+    process_count = cam_count * 2 + face_count + sql_count  # 一个相机对应两个进程（读视频流 和 处理视频流）
+    logger.info(f"进程数量: {process_count} 相机:{cam_count}*2 人脸识别:{face_count} 数据库:{sql_count}")
+
+    # 创建需要的消息队列
+    # 数据库消息队列
+    sql_queue_list = []
+    for i in range(sql_count):
+        sql_queue_list.append(Manager().Queue(main_yaml['database']['capacity']))
+    # 人脸识别消息队列
+    face_queue_list = []
+    for i in range(face_count):
+        face_queue_list.append(Manager().Queue(main_yaml['face']['capacity']))
+    # 相机消息消息队列
+    cam_interval = main_yaml['cam_interval']  # 每n秒启动一台相机
+    frame_queue_capacity = main_yaml['frame_queue_capacity']  # 视频帧缓存队列上限
+    qframe_list = []  # 存放读取的视频帧
+    qresult_list = []  # 存放人脸识别返回的结果
+    cam_event_list = []  # 用于初始化读/写视频流进程
+    for i in range(cam_count):
+        qframe_list.append(Manager().Queue(frame_queue_capacity))
+        qresult_list.append(Manager().Queue(frame_queue_capacity))
+        cam_event_list.append(Manager().Event())
+
+    # 开启数据库进程
+    if sql_count > 0:
+        for i in range(sql_count):
+            sql_id = i + 1
+            sql_name = f"sql_process {sql_id}"
+            Process(target=sql_process,
+                    args=(sql_id, sql_queue_list[i],
+                          sqlEvent if i == sql_count - 1 else None,
+                          escEvent, main_yaml),
+                    name=sql_name,
+                    daemon=True).start()
+    else:
+        sqlEvent.set()
+
+    logger.info("数据库初始化完成！")
+
+
+if __name__ == "__main__":
+    # test1_log()
+    # test2_init_queue()
+    test3_init_database()

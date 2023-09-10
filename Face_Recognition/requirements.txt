@@ -11,7 +11,7 @@ scikit-learn
 scipy
 seaborn
 tensorboard
-tensorboardX # 问题
+tensorboardX
 # torch
 # torchvision
 tqdm

@@ -1,0 +1,38 @@
+# 1.全局配置
+enable_log: True # 全局日志控制，决定是否将消息打印到控制台和日志文件中
+enable_debug: True # 全局DEBUG控制，决定是否将消息打印到控制台
+enable_args: True # 是否启用args重载。启用后yaml配置会覆盖args参数
+main_id: 1 # 进程标识
+cam_interval: 8 # 相机启动间隔 (单位:s)
+
+# 2.相机配置
+# 视频帧缓存队列上限
+frame_queue_capacity: 10
+# 相机配置列表
+cam_list:
+  - keliu1
+  - renlian1
+
+# 3.人脸识别配置
+face:
+  count: 2 # 进程数
+  capacity: 50 # 消息队列容量
+  sleep: 0.2 # 执行间隔
+  max_tolerance: 5 # 一个对象最多执行的人脸识别次数，如果匹配次数超过该值仍为unknown，则不继续识别
+  img_path: ./assets/face/dataset # 人脸图像库路径
+  update_path: ./assets/face/main/face.pkl # 人脸标识文件路径（该文件用于刷新人脸特征库）
+
+# 4.数据库配置
+database:
+  type: mysql
+  count: 2 # 进程数
+  capacity: 50 # 消息队列容量
+  sleep: 0.2 # 1s执行一次
+  host: 127.0.0.1 # 数据库ip
+  port: 3306 # 端口号
+  user: root # 用户名
+  password: 123456 # 密码
+  database_name: personnelflow # 数据库名称
+  pool_size: 5 # 数据库池大小
+  web_ip: 127.0.0.1 # 发送消息ip
+  web_port: 9090 # 发送消息port

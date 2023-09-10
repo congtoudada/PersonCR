@@ -56,7 +56,7 @@ per_img_interval: 25
 # 追踪人
 args1:
   expn: renlian
-  path: assets/renlian/renlian1_2.mp4 # 取流地址
+  path: assets/renlian/renlian1.mp4 # 取流地址
   # path: rtsp://admin:hik12345@192.168.1.64:554/h264/ch1/main/av_stream_renlian1
   # path: rtsp://admin:ADMIN123@180.136.11.16:554/h264/ch1/main/av_stream_renlian1
   save_result: True # 是否存储视频！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
