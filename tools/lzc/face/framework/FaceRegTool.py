@@ -33,7 +33,7 @@ class FaceRegTool:
         return face_infer['obj_id'], face_infer['img']
 
     @staticmethod
-    def pack_rsp(obj_id: int, person_id: int, score: float, img) -> dict:
+    def pack_rsp(obj_id: int, person_id: int, score: float, face_img) -> dict:
         """
         编码。系统调用
 
@@ -41,7 +41,7 @@ class FaceRegTool:
         obj_id (int): 目标追踪id
         person_id (int): 识别结果，对应数据库主键。1表示陌生人
         score (float): 识别置信度
-        img (ndarry): 人脸图片
+        face_img (ndarry): 人脸图片
 
         返回:
         dict
@@ -50,7 +50,7 @@ class FaceRegTool:
             'obj_id': obj_id,
             'person_id': person_id,
             'score': score,
-            'face_img': img
+            'face_img': face_img
         }
         return face_result
 
@@ -63,9 +63,9 @@ class FaceRegTool:
         face_result (dict): 结果信息dict
 
         返回:
-        obj_id: 目标追踪id
-        person_id: 识别结果，对应数据库主键。-1表示未识别
-        score: 预测分数
-        img: 人脸图片
+        obj_id (int): 目标追踪id
+        person_id (int): 识别结果，对应数据库主键。1表示陌生人
+        score (float): 识别置信度
+        face_img (ndarry): 人脸图片
         """
         return face_result['obj_id'], face_result['person_id'], face_result['score'], face_result['face_img']

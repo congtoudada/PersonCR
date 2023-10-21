@@ -333,6 +333,7 @@ class CountMgr(ICountMgr):
                 "frame_history_capacity": main_yaml['cam']['frame_history_capacity'],
                 "reg_interval": main_yaml['cam']['reg_interval'],
                 "reg_count_thresh": main_yaml['cam']['reg_count_thresh'],
+                "reg_score_expect": main_yaml['cam']['reg_score_expect'],
                 # 其他
                 "save_path": output_dir,
                 "qface_req": qface_req,

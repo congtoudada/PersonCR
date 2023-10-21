@@ -242,21 +242,35 @@ def write_read_process(qface_req, qface_rsp, qsql_list, esc_event, args, main_ya
     # ------------------------------ write ------------------------------
     # 准备好可能需要的变量
     cam_url = cam_yaml['args1']['path']  # 取流地址
-
+    drop_interval = main_yaml['cam']['drop_interval']  # 2: 每2帧里面丢1帧
+    drop_flag = 0
     # 等待处理进程初始化后，开始初始化并接收视频流
     cap = cv2.VideoCapture(cam_url)
+    # 创建窗口
+    cv2.namedWindow('debug window', cv2.WINDOW_NORMAL)
+    # 调整窗口大小
+    cv2.resizeWindow('debug window', 1280, 720)
 
     try:
         while True:
             status = False
             # write
             if cap.isOpened():
-                status, frame = cap.read()  # 读帧
-
+                # 主动丢帧
+                drop_flag += 1
+                if drop_flag >= drop_interval:
+                    drop_flag = 0
+                    cap.grab()
+                else:
+                    status, frame = cap.read()
+                    # 视频播放完成则结束
+                    if not status:
+                        break
+            else:
+                break
             # read
             if status:
                 now = time.time()
-
                 # DEBUG打印
                 if debug_mode and frame_id % 20 == 0:
                     logger.info(
@@ -311,8 +325,17 @@ def write_read_process(qface_req, qface_rsp, qsql_list, esc_event, args, main_ya
                 if args.save_result:
                     vid_writer.write(online_im)
 
+                # online_im = cv2.resize(online_im, (640, 480))
+                cv2.imshow("debug window", online_im)
                 frame_id += 1
+
+                # 如果按下'q'键，就退出循环
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
 
     except Exception as e:
         logger.info(f"{pname} {traceback.format_exc()}")
-        cap = cv2.VideoCapture(cam_url)
+
+    # 释放cap对象并关闭所有窗口
+    cap.release()
+    cv2.destroyAllWindows()

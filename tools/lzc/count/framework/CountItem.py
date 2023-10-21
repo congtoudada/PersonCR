@@ -37,6 +37,7 @@ class CountItem:
         self.per_id = 0
         self.current_per_id = 0
         self.score = 0
+        self.best_face_img = None
         self.reg_results = {}
         self.last_face_req_frame = 0
         self.req_count = 0
@@ -67,8 +68,9 @@ class CountItem:
         self.last_update_frame = running_data.frame_id
         # 人脸extension
         self.per_id = 1  # 默认为陌生人
-        self.current_per_id = 1  # 当前识别情况
+        self.current_per_id = 1  # 当前识别情况 (用于可视化)
         self.score = 0  # 识别分数
+        self.best_face_img = None  # 最好的识别截图
         self.reg_results.clear()
         self.last_face_req_frame = running_data.frame_id
         self.req_count = 0  # 当前发送的face req数量，每收到一次响应会-1
@@ -98,10 +100,10 @@ class CountItem:
 
         # 发送人脸识别请求
         if data.run_mode == 1:
-            # 当前为陌生人 and 没有正在发送的请求 and 超过发送间隔才发送
-            if self.per_id == 1 \
-                    and self.req_count <= 0 \
-                    and running_data.frame_id - self.last_face_req_frame > data.reg_interval:
+            # 当前分数小于期望则继续发送 没有正在发送的请求 and 超过发送间隔才发送
+            if self.req_count <= 0 \
+                    and running_data.frame_id - self.last_face_req_frame > data.reg_interval \
+                    and self.score < data.reg_score_expect:
                 if self._send_reg_req(self.obj_id, running_data.im, running_data.tlwh):
                     self.last_face_req_frame = running_data.frame_id
                     self.req_count += 1
@@ -144,8 +146,6 @@ class CountItem:
         # print(f"receive face rsp: {self.obj_id} {self.countMgr.running_data.frame_id}")
         if per_id == 1:  # 陌生人则返回
             return
-        if self.per_id != 1:  # 当前有记录则返回
-            return
 
         if not self.reg_results.__contains__(per_id):
             self.reg_results[per_id] = 1
@@ -156,13 +156,17 @@ class CountItem:
         # 匹配成功超过一定次数，才认为匹配成功
         if self.reg_results[per_id] >= data.reg_count_thresh:
             self.per_id = per_id
-            self.score = score
+            # 分数更新
+            if self.score < score:
+                self.score = score
+                self.best_face_img = face_img
+
             logger.info(f"{self.countMgr.data.cam_name} 成功找到人脸匹配结果: {self.obj_id} <=> {self.per_id}")
-            # 写入本地
-            if data.is_img:
-                self.img_save_path = os.path.join(self.save_dir,
-                                                  f"{self.obj_id}_{self.begin_zone.name}_{per_id}_{score:.2f}.jpg")
-                cv2.imwrite(self.img_save_path, face_img)
+            # # 写入本地
+            # if data.is_img:
+            #     self.img_save_path = os.path.join(self.save_dir,
+            #                                       f"{self.obj_id}_{self.begin_zone.name}_{per_id}_{score:.2f}.jpg")
+            #     cv2.imwrite(self.img_save_path, face_img)
 
     # 视频录制
     def _record_video(self, im, now, frame_id):
@@ -184,11 +188,8 @@ class CountItem:
     def on_success_quit(self, data: CountMgrData, running_data: CountMgrRunningData):
         # 设为Dying状态
         self.state = CountItemStateEnum.Dying
-        if data.run_mode == 0:
-            self._create_shot_img(data, running_data)  # 生成候选图
-        else:
-            if self.per_id == 1:  # 只有陌生人才生成候选图
-                self._create_shot_img(data, running_data)
+        # 生成截图
+        self._create_shot_img(data, running_data)
 
         if data.run_mode == 0:
             self._on_keliu_success_quit(data, running_data)  # 直接发送消息给数据库
@@ -256,9 +257,18 @@ class CountItem:
     # 成功离开预处理
     def _create_shot_img(self, data: CountMgrData, running_data: CountMgrRunningData):
         # 生成兜底图
-        logger.info(f"{data.cam_name} 生成候选图: {self.obj_id}_{self.begin_zone.name}.jpg")
-        self.img_save_path = os.path.join(self.save_dir, f"{self.obj_id}_{self.begin_zone.name}.jpg")
-        cv2.imwrite(self.img_save_path, self._get_track_img(running_data.im, running_data.tlwh, data.border))
+        # logger.info(f"{data.cam_name} 生成候选图: {self.obj_id}_{self.begin_zone.name}.jpg")
+        if data.run_mode == 0:
+            self.img_save_path = os.path.join(self.save_dir, f"{self.obj_id}_{self.begin_zone.name}.jpg")
+            cv2.imwrite(self.img_save_path, self._get_track_img(running_data.im, running_data.tlwh, data.border))
+        else:
+            self.img_save_path = os.path.join(
+                self.save_dir, f"{self.obj_id}_{self.begin_zone.name}_{self.per_id}_{self.score:.2f}.jpg.jpg")
+            if self.per_id == 1:
+                cv2.imwrite(self.img_save_path, self._get_track_img(running_data.im, running_data.tlwh, data.border))
+            else:
+                cv2.imwrite(self.img_save_path, self.best_face_img)
+
 
     # 清除不合法状态下的资源
     def on_release(self, is_clear):

@@ -158,8 +158,6 @@ def run():
     if face_count > 0:
         avg = int(cam_count / face_count)
         mod = int(cam_count % face_count)
-        left = 0
-        right = 0
 
         for i in range(face_count):
             left = avg * i

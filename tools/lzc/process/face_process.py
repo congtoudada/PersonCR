@@ -28,6 +28,7 @@ def face_process(process_id, faceReq_queue_list: list, faceRsp_queue_list: list,
     # 使用spawn会创建全新进程，需重新配置日志
     ConfigTool.load_log_config(main_yaml)
 
+    debug_mode = main_yaml['debug_mode']
     sleep_time = main_yaml['face']['sleep']
     main_id = main_yaml['main_id']
     face_update_path = main_yaml['face']['update_path']
@@ -47,12 +48,12 @@ def face_process(process_id, faceReq_queue_list: list, faceRsp_queue_list: list,
                 if not faceReq_queue_list[i].empty():
                     pack_req_data = faceReq_queue_list[i].get()
 
-                    obj_id, img = FaceRegTool.unpack_req(pack_req_data)
+                    obj_id, face_img = FaceRegTool.unpack_req(pack_req_data)
 
-                    if img is not None:
-                        per_id, score = faceRegMgr.inference(img)
-                        logger.info(
-                            f"{pname} 人脸识别结果 [obj:{obj_id} per: {per_id} score: {score:.2f}]")
+                    if face_img is not None:
+                        per_id, score = faceRegMgr.inference(face_img)
+                        # logger.info(
+                        #     f"{pname} 人脸识别结果 [obj:{obj_id} per: {per_id} score: {score:.2f}]")
                         if per_id != 1 and score < score_thresh:
                             # logger.info(f"{pname} obj_id:{obj_id} - per_id: {per_id} 识别分数过低被剔除: {score:.2f} < {score_thresh:.2f}")
                             per_id = 1  # 设为Unknown
@@ -60,10 +61,13 @@ def face_process(process_id, faceReq_queue_list: list, faceRsp_queue_list: list,
                         logger.error(f"{pname} 人脸图片获取失败!")
                         continue
 
-                    # logger.info(f"{pname} 识别成功! obj: {obj_id} match result:{per_id}")
                     if per_id == 1:
-                        img = None
-                    pack_rsp_data = FaceRegTool.pack_rsp(obj_id, per_id, score, img)
+                        face_img = None
+                    else:
+                        if debug_mode:
+                            logger.info(f"{pname} 识别成功! obj: {obj_id} match result:{per_id} score:{score:.2f}")
+
+                    pack_rsp_data = FaceRegTool.pack_rsp(obj_id, per_id, score, face_img)
                     faceRsp_queue_list[i].put(pack_rsp_data)
 
             else:  # 检测特征库更新，是否退出进程

@@ -37,6 +37,7 @@ class CountMgrData:
         self.frame_history_capacity = init_dict['frame_history_capacity']  # 回放视频帧缓存上限
         self.reg_interval = init_dict['reg_interval']  # 人脸识别频率
         self.reg_count_thresh = init_dict['reg_count_thresh']  # 人脸识别决定阈值
+        self.reg_score_expect = init_dict['reg_score_expect']
 
         # 其他
         self.save_path = init_dict['save_path']

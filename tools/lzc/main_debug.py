@@ -1,4 +1,5 @@
 import multiprocessing
+import time
 
 from tools.lzc.process.cam_process import *
 from tools.lzc.process.cam_process_debug import write_read_process
@@ -159,8 +160,6 @@ def run():
     if face_count > 0:
         avg = int(cam_count / face_count)
         mod = int(cam_count % face_count)
-        left = 0
-        right = 0
 
         for i in range(face_count):
             left = avg * i
@@ -186,6 +185,9 @@ def run():
 
     write_read_process(faceReq_queue_list[0], faceRsp_queue_list[0],
                 sql_queue_list, escEvent, args, main_yaml, cam_yaml)
+
+    escEvent.set()
+    time.sleep(1)
 
 
 if __name__ == "__main__":

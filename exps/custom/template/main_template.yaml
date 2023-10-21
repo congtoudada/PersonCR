@@ -18,9 +18,11 @@ cam:
   # 丢帧数（越大性能越差，准确率高） eg.2: 每2帧里面丢1帧
   drop_interval: 2
   # 未识别时人脸识别发送间隔 (实际发送间隔约为: max(reg_frequency * drop_interval, 响应时间))
-  reg_interval: 1
+  reg_interval: 10
   # 人脸识别决定阈值 (只有当识别结果次数>=该阈值，才认定人脸检测成功）
   reg_count_thresh: 2
+  # 人脸截图分数期望值 (如果分数不够，即使检测出非陌生人，也继续发送人脸识别请求以寻找更清晰的结果，该值一般不会影响识别结果）
+  reg_score_expect: 0.85
   # 相机配置列表
   list:
     - keliu1

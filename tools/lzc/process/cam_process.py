@@ -61,7 +61,6 @@ def write_process(qframe, cam_event, esc_event, main_yaml, cam_yaml) -> None:
     # 等待处理进程初始化后，开始初始化并接收视频流
     cap = cv2.VideoCapture(cam_url)
     frame_fps = cap.get(cv2.CAP_PROP_FPS)
-    is_cal_frame = False
     real_frame = 0
     drop_flag = 0
 
