@@ -18,5 +18,5 @@ You can use the converted model_trt.pth to run TensorRT demo with **130 FPS**:
 
 ```shell
 cd <ByteTrack_HOME>
-python3 tools/demo_track_process.py video -f exps/example/mot/yolox_s_mix_det.py --face --save_result
+python3 tools/main_release.py video -f exps/example/mot/yolox_s_mix_det.py --face --save_result
 ```

@@ -81,7 +81,7 @@ def face_process(process_id, faceReq_queue_list: list, faceRsp_queue_list: list,
 
 
 if __name__ == "__main__":
-    main_yaml = ConfigTool.load_main_config("exps/custom/main1.yaml")
+    main_yaml = ConfigTool.load_main_config("exps/custom/main_debug.yaml")
     ConfigTool.load_log_config(main_yaml)
 
     main_id = main_yaml['main_id']
