@@ -60,10 +60,9 @@ def face_process(process_id, faceReq_queue_list: list, faceRsp_queue_list: list,
                         logger.error(f"{pname} 人脸图片获取失败!")
                         continue
 
-                    if per_id == 1:
-                        continue
-
                     # logger.info(f"{pname} 识别成功! obj: {obj_id} match result:{per_id}")
+                    if per_id == 1:
+                        img = None
                     pack_rsp_data = FaceRegTool.pack_rsp(obj_id, per_id, score, img)
                     faceRsp_queue_list[i].put(pack_rsp_data)
 

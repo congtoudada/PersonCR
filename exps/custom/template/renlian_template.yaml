@@ -30,7 +30,7 @@ is_reverse: False
 # 只检测一个方向 1:双向检测 2:只检测进 3:只检测出
 only_dir: 2
 # 是否可视化追踪效果
-is_vis: False
+is_vis: True
 
 # 2.抓拍视频设置
 cap:

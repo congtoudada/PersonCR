@@ -101,7 +101,7 @@ class CountItem:
             # 当前为陌生人 and 没有正在发送的请求 and 超过发送间隔才发送
             if self.per_id == 1 \
                     and self.req_count <= 0 \
-                    and running_data.frame_id - self.last_face_req_frame > data.reg_frequency:
+                    and running_data.frame_id - self.last_face_req_frame > data.reg_interval:
                 if self._send_reg_req(self.obj_id, running_data.im, running_data.tlwh):
                     self.last_face_req_frame = running_data.frame_id
                     self.req_count += 1
@@ -123,10 +123,25 @@ class CountItem:
                     and self.req_count <= 0:
                 self._on_renlian_succe_quit()
 
+    # 人脸识别请求
+    def _send_reg_req(self, obj_id, im, tlwh):
+        data: CountMgrData = self.countMgr.data
+        face_img = self._get_track_img(im, tlwh, data.border)
+        pack_data = FaceRegTool.pack_req(obj_id, face_img)
+
+        if data.qface_req and not data.qface_req.full():
+            data.qface_req.put(pack_data)
+            # print(f"send face req: {self.obj_id} {self.countMgr.running_data.frame_id}")
+            # cv2.imwrite(os.path.join(self.save_dir, f"{self.countMgr.running_data.frame_id}.jpg"), face_img)
+            return True
+        else:
+            return False
+
     # 人脸识别成功事件，会根据情况将图片写入本地
     def process_reg_rsp(self, per_id, score, face_img):
         self.current_per_id = per_id
         self.req_count -= 1
+        # print(f"receive face rsp: {self.obj_id} {self.countMgr.running_data.frame_id}")
         if per_id == 1:  # 陌生人则返回
             return
         if self.per_id != 1:  # 当前有记录则返回
@@ -188,19 +203,6 @@ class CountItem:
                 self.face_state = FaceStateEnum.CanSend
                 self._on_renlian_succe_quit()
 
-    # 人脸识别请求
-    def _send_reg_req(self, obj_id, im, tlwh):
-        data: CountMgrData = self.countMgr.data
-        face_img = self._get_track_img(im, tlwh, data.border)
-        pack_data = FaceRegTool.pack_req(obj_id, face_img)
-
-        if data.qface_req and not data.qface_req.full():
-            data.qface_req.put(pack_data)
-            # cv2.imwrite(os.path.join(self.save_dir, f"{self.countMgr.running_data.frame_id}.jpg"), face_img)
-            return True
-        else:
-            return False
-
     def _on_keliu_success_quit(self, data: CountMgrData, running_data: CountMgrRunningData):
         pack_data = SqlTool.pack_keliu_data(
             record_time=self.begin_time,
@@ -219,15 +221,14 @@ class CountItem:
             self.face_state = FaceStateEnum.Sended
             data: CountMgrData = self.countMgr.data
 
-            # 人脸识别优化，增大匹配几率
-            # 如果self.per_id==1，则在符合阈值的结果中挑选最出现次数最多的
-            if self.per_id == 1:
-                # 取出字典中值最大的元素对应的键
-                print(self.reg_results.__len__())
-                if self.reg_results.__len__() > 0:
-                    # 使用max函数和字典的values方法找到最大的值，然后直接使用该最大值在字典中查找对应的键
-                    max_value = max(self.reg_results.values())
-                    self.per_id = next(key for key, value in self.reg_results.items() if value == max_value)
+            # # 人脸识别优化，增大匹配几率（视情况开启）：
+            # #   如果self.per_id==1，则在符合阈值的结果中挑选最出现次数最多的
+            # if self.per_id == 1:
+            #     # 取出字典中值最大的元素对应的键
+            #     if self.reg_results.__len__() > 0:
+            #         # 使用max函数和字典的values方法找到最大的值，然后直接使用该最大值在字典中查找对应的键
+            #         max_value = max(self.reg_results.values())
+            #         self.per_id = next(key for key, value in self.reg_results.items() if value == max_value)
 
             pack_data = SqlTool.pack_renlian_data(
                 record_time=self.begin_time,

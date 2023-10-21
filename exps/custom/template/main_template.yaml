@@ -17,8 +17,8 @@ cam:
   jump: 3
   # 丢帧数（越大性能越差，准确率高） eg.2: 每2帧里面丢1帧
   drop_interval: 2
-  # 未识别时人脸识别发送频率 (实际发送帧率约为: max(reg_frequency * drop_interval, 响应时间))
-  reg_frequency: 10
+  # 未识别时人脸识别发送间隔 (实际发送间隔约为: max(reg_frequency * drop_interval, 响应时间))
+  reg_interval: 1
   # 人脸识别决定阈值 (只有当识别结果次数>=该阈值，才认定人脸检测成功）
   reg_count_thresh: 2
   # 相机配置列表

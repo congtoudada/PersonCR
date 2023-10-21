@@ -331,7 +331,7 @@ class CountMgr(ICountMgr):
                 # main_yaml
                 "debug_mode": main_yaml['debug_mode'],
                 "frame_history_capacity": main_yaml['cam']['frame_history_capacity'],
-                "reg_frequency": main_yaml['cam']['reg_frequency'],
+                "reg_interval": main_yaml['cam']['reg_interval'],
                 "reg_count_thresh": main_yaml['cam']['reg_count_thresh'],
                 # 其他
                 "save_path": output_dir,

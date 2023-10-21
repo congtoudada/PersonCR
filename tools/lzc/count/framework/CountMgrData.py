@@ -35,7 +35,7 @@ class CountMgrData:
         # main_yaml
         self.debug_mode = init_dict['debug_mode']  # debug模式
         self.frame_history_capacity = init_dict['frame_history_capacity']  # 回放视频帧缓存上限
-        self.reg_frequency = init_dict['reg_frequency']  # 人脸识别频率
+        self.reg_interval = init_dict['reg_interval']  # 人脸识别频率
         self.reg_count_thresh = init_dict['reg_count_thresh']  # 人脸识别决定阈值
 
         # 其他

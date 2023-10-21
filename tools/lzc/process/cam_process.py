@@ -224,9 +224,8 @@ def read_process(qframe, cam_event, qface_req, qface_rsp, qsql_list, esc_event, 
                 if is_vis:
                     online_im = plot_tracking(
                         online_im, online_tlwhs, online_ids, scores=online_scores, frame_id=frame_id + 1,
-                        fps=1. / timer.average_time, per_ids=None
+                        fps=1. / timer.average_time, per_ids=None if run_mode == 0 else countMgr.get_container()
                     )  # 画追踪boundingbox
-                    # per_ids=None if run_mode == 0 else countMgr.get_container()
             else:
                 timer.toc()
                 online_im = img_info['raw_img']
