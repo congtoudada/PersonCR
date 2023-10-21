@@ -10,7 +10,7 @@ det_mode: 0
 # 相机id
 cam_id: 1
 # 中线位置比例 (0:up_ratio 1:down_ration)
-center_ratio: 0.4
+center_ratio: 0.5
 # 计数检测参数
 # 0:detect_up 1:detect_down 2:buffer_up 3:buffer_down
 # 4:detect_left 5:detect_right 6:buffer_left 7:buffer_right
@@ -31,23 +31,19 @@ is_reverse: False
 only_dir: 2
 # 是否可视化追踪效果
 is_vis: False
-# 读视频流丢帧数频率（每多少实际帧丢一帧，该参数的设置会影响整体处理帧率）
-lost_frame_interval: 2
-# 丢失对象几帧销毁对象（避免内存泄漏）
-lost_obj: 25
 
 # 2.抓拍视频设置
 cap:
   is_img: True # 是否抓拍图像
   border: 10 # 抓拍图像外填充大小（该值越大，抓拍的图片尺寸越大）
-  per_img_interval: 25 # 如果没有抓拍到合适人脸，就多少帧抓一张候选图
 
   is_vid: True # 是否抓拍视频
   width: 1280 # 抓拍视频宽
   height: 720 # 抓拍视频高
   fps: 25 # 抓拍视频帧率
-  save_fps: 60 # 当对象成功计数后，额外抓拍的帧数
+  save_frames: 50 # 当对象成功计数后，额外抓拍的帧数
   max_record_frames: 7500 # 最大存储帧数
+  lost_frames: 30   # 丢失对象几帧销毁对象（避免内存泄漏）
 
 # 3.args参数重载
 # 人追踪

@@ -17,7 +17,7 @@ from pybaseutils import image_utils, file_utils
 
 
 class FaceRecognizer(object):
-    def __init__(self, database, det_thresh=cfg.det_thresh, rec_thresh=cfg.rec_thresh, is_local=True):
+    def __init__(self, database, det_thresh=cfg.det_thresh, rec_thresh=cfg.rec_thresh, local_load=True):
         """
         @param database: 人脸数据库的路径
         @param det_thresh: 人脸检测阈值，小于该阈值的检测框会被剔除
@@ -36,7 +36,7 @@ class FaceRecognizer(object):
                                                 embedding_size=cfg.FEATURE["embedding_size"],
                                                 device=cfg.device)
         # 初始化人脸数据库，用于注册人脸
-        self.faceReg = face_register.FaceRegister(database, is_local)
+        self.faceReg = face_register.FaceRegister(database, local_load)
 
     def crop_faces_alignment(self, rgb, boxes, landm):
         """
@@ -158,7 +158,7 @@ class FaceRecognizer(object):
             text = [""] * len(boxes)
         image = image_utils.draw_image_bboxes_text(image, boxes, text, thickness=thickness, fontScale=fontScale,
                                                    color=color, drawType="chinese")
-        if "label" in face_info: print("pred label:{}".format(text))
+        if vis and "label" in face_info: print("pred label:{}".format(text))
         if vis: image_utils.cv_show_image(title, image, delay=delay)
         return image
 

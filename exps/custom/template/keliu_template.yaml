@@ -31,23 +31,19 @@ is_reverse: True
 only_dir: 1
 # 是否可视化追踪效果
 is_vis: False
-# 读视频流丢帧数频率（每多少帧丢一帧）
-lost_frame_interval: 2
-# 丢失对象几帧销毁对象（避免内存泄漏）
-lost_obj: 25
 
 # 2.抓拍设置
 cap:
   is_img: True # 是否抓拍图像
   border: 10 # 抓拍图像外填充大小（该值越大，抓拍的图片尺寸越大）
-  per_img_interval: 25 # 如果没有抓拍到合适人脸，就多少帧抓一张候选图
 
   is_vid: True # 是否抓拍视频
   width: 1280 # 抓拍视频宽
   height: 720 # 抓拍视频高
   fps: 25 # 抓拍视频帧率
-  save_fps: 60 # 当对象成功计数后，额外抓拍的帧数
+  save_frames: 50 # 当对象成功计数后，额外抓拍的帧数
   max_record_frames: 7500 # 最大存储帧数
+  lost_frames: 30   # 丢失对象几帧销毁对象（避免内存泄漏）
 
 
 # 3.args参数重载

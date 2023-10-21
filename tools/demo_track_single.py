@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
     # multiprocessing.set_start_method('spawn')
     # 创建共享队列
-    p_qsql = Manager().Queue(main_yaml['mysql']['max_size'])
+    p_qsql = Manager().Queue(main_yaml['sql']['max_size'])
     qsql_list = [p_qsql]
     p_qface = Manager().Queue(main_yaml['face']['max_size'])
     qface_list = [p_qface]

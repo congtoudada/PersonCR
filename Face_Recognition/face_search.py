@@ -16,11 +16,11 @@ from pybaseutils import image_utils, file_utils
 
 
 class FaceModel(face_recognizer.FaceRecognizer):
-    def __init__(self, database):
+    def __init__(self, database, local_load=True):
         """
         @param database: 人脸数据库的路径
         """
-        super(FaceModel, self).__init__(database=database)
+        super(FaceModel, self).__init__(database=database, local_load=local_load)
 
     def start_capture(self, video_file, save_video=None, detect_freq=1, vis=True):
         """
@@ -102,6 +102,21 @@ class FaceModel(face_recognizer.FaceRecognizer):
             print(image_path, flush=True)
             return 1, 0
 
+    def detect_image_ram(self, raw_image, vis=False):
+        try:
+            # image = image_utils.read_image_ch(image_path)
+            image = image_utils.resize_image(raw_image, size=(None, 640))
+            image, face_info = self.search_face_task(image, vis=vis)
+            if len(face_info['label']) > 0:
+                if face_info['label'][0] == "unknown":
+                    return 1, 0
+                else:
+                    return int(face_info['label'][0]), face_info['score'][0]
+            else:
+                return 1, 0
+        except:
+            traceback.print_exc()
+            return 1, 0
 
 def parse_opt():
     database = configs.database  # 存储人脸数据库特征路径database

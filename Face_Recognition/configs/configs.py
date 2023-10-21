@@ -5,7 +5,7 @@ import os
 root = os.path.dirname(os.path.dirname(__file__))
 
 det_thresh = 0.4  # 人脸检测阈值，小于该阈值的检测框会被剔除
-rec_thresh = 0.45  # 人脸识别阈值，小于该阈值的人脸识别结果为unknown，表示未知
+rec_thresh = 0.3  # 人脸识别阈值，小于该阈值的人脸识别结果为unknown，表示未知
 # 人脸检测模型,目前支持RFB和MTCNN人脸检测
 DETECTOR = {
     # "net_name": "RFB",

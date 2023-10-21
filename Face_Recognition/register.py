@@ -43,8 +43,8 @@ def register():
     # 测试人脸识别效果
     # fr.detect_image_dir(test_dir, vis=True)
 
-def my_register(portrait, database, is_local=False):
-    fr = FaceRecognizer(database=database, is_local=is_local)
+def my_register(portrait, database, local_load=False):
+    fr = FaceRecognizer(database=database, local_load=local_load)
     # 生成人脸数据库
     fr.create_database(portrait=portrait, vis=False)
 

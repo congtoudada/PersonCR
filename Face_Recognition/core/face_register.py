@@ -13,13 +13,13 @@ from Face_Recognition.core.face_matcher import EmbeddingMatching
 
 
 class FaceRegister(object):
-    def __init__(self, data_file="", is_local=True):
+    def __init__(self, data_file="", local_load=True):
         """
         @param data_file: 人脸数据库的文件，默认为空
         """
         self.data_file = data_file
         self.face_database = {}
-        if is_local and os.path.exists(self.data_file): self.face_database = self.load(file=self.data_file)
+        if local_load and os.path.exists(self.data_file): self.face_database = self.load(file=self.data_file)
         self.matcher = EmbeddingMatching(None, None)
         self.update()
 

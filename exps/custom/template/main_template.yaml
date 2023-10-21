@@ -1,30 +1,43 @@
 # 1.全局配置
 enable_log: True # 全局日志控制，决定是否将消息打印到控制台和日志文件中
-enable_debug: True # 全局DEBUG控制，决定是否将消息打印到控制台
+enable_debug: True # 全局DEBUG控制，决定是否将消息打印到控制台（如果enable_log为False则该项无效）
 enable_args: True # 是否启用args重载。启用后yaml配置会覆盖args参数
+debug_mode: True # DEBUG模式运行 (如果为本地视频流则可以开启DEBUG模式，避免读取视频过快导致大量丢帧）
 main_id: 1 # 进程标识
 cam_interval: 8 # 相机启动间隔 (单位:s)
+running_file: ./assets/running/main.pkl # 项目运行文件，运行时生成，删除则终止
 
 # 2.相机配置
-# 视频帧缓存队列上限
-frame_queue_capacity: 10
-# 相机配置列表
-cam_list:
-  - keliu1
-  - renlian1
+cam:
+  # 取流视频帧缓存队列上限
+  frame_queue_capacity: 10
+  # 回放视频帧缓存上限 (决定了抓拍视频从之前帧开始的程度，该值越大显存占用越大）
+  frame_history_capacity: 10
+  # 开始跳帧阈值（当队列累积帧数超过该值，将启动自适应丢帧算法）
+  jump: 3
+  # 丢帧数（越大性能越差，准确率高） eg.2: 每2帧里面丢1帧
+  drop_interval: 2
+  # 未识别时人脸识别发送频率 (实际发送帧率约为: max(reg_frequency * drop_interval, 响应时间))
+  reg_frequency: 10
+  # 人脸识别决定阈值 (只有当识别结果次数>=该阈值，才认定人脸检测成功）
+  reg_count_thresh: 2
+  # 相机配置列表
+  list:
+    - keliu1
+    - renlian1
 
 # 3.人脸识别配置
 face:
   count: 2 # 进程数
-  capacity: 50 # 消息队列容量
+  capacity: 8 # 消息队列容量（每台相机通信）
   sleep: 0.2 # 执行间隔
-  max_tolerance: 5 # 一个对象最多执行的人脸识别次数，如果匹配次数超过该值仍为unknown，则不继续识别
+  score_thresh: 0.5  # 人脸识别阈值 range: (0.3, 1)
   img_path: ./assets/face/dataset # 人脸图像库路径
-  update_path: ./assets/face/main/face.pkl # 人脸标识文件路径（该文件用于刷新人脸特征库）
+  update_path: ./assets/running/face.pkl # 人脸标识文件路径（该文件用于刷新人脸特征库）
 
 # 4.数据库配置
 database:
-  type: mysql
+  type: sql
   count: 2 # 进程数
   capacity: 50 # 消息队列容量
   sleep: 0.2 # 1s执行一次
@@ -33,6 +46,6 @@ database:
   user: root # 用户名
   password: 123456 # 密码
   database_name: personnelflow # 数据库名称
-  pool_size: 5 # 数据库池大小
+  pool_size: 2 # 数据库池大小
   web_ip: 127.0.0.1 # 发送消息ip
   web_port: 9090 # 发送消息port

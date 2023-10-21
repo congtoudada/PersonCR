@@ -2,35 +2,17 @@ import os
 import pickle
 import threading
 import time
+import traceback
 
 from loguru import logger
-from multiprocessing import Process, current_process
+from multiprocessing import Process, current_process, Manager
+import cv2
+import numpy as np
 
-# from facenet.mypredict import mypredict
-from tools.lzc.my_logger import log_config
-from Face_Recognition import FaceModel, configs, my_register
-
-
-def face_reboot(face_update_path, main_id, process_id, face_model=None):
-    if main_id == 1 and process_id == 1:  # 由1号子进程的1号人脸进程生成json文件
-        my_register(configs.portrait, configs.database, is_local=False)
-        # 成功更新特征库，生成文件标识
-        if not os.path.exists(face_update_path):
-            write_data = {"face": "running"}
-            pickle.dump(write_data, open(face_update_path, 'wb'))
-    else:
-        while not os.path.exists(configs.database):  # 其他进程等待特征库生成完毕后初始化
-            time.sleep(0.5)
-
-    while not os.path.exists(face_update_path):
-        time.sleep(0.5)  # 等待json生成完毕
-
-    if face_model is None:
-        face_model = FaceModel(database=configs.database)  # 加载新的人脸识别模型
-    else:
-        face_model.faceReg.face_database = face_model.faceReg.load(file=configs.database)
-        face_model.faceReg.update()
-    return face_model
+from tools.lzc.config_tool import ConfigTool
+from tools.lzc.face.framework.FaceRegMgr import FaceRegMgr
+from tools.lzc.face.framework.FaceRegTool import FaceRegTool
+from tools.lzc.face.framework.IFaceRegMgr import IFaceRegMgr
 
 """
 process_id: 自定义进程id
@@ -40,82 +22,96 @@ faceEvent: 人脸进程初始化事件
 escEvent: 退出事件
 main_yaml: 主配置文件
 """
-def face_process(process_id, faceQueue, qresult_list, faceEvent, escEvent, main_yaml):
+def face_process(process_id, faceReq_queue_list: list, faceRsp_queue_list: list, faceEvent, escEvent, main_yaml):
     pname = f'[ {os.getpid()}:face_process {process_id} ]'
-    logger.info(f'{pname} launch!')
 
     # 使用spawn会创建全新进程，需重新配置日志
-    log_config(main_yaml)
+    ConfigTool.load_log_config(main_yaml)
 
     sleep_time = main_yaml['face']['sleep']
     main_id = main_yaml['main_id']
     face_update_path = main_yaml['face']['update_path']
+    score_thresh = main_yaml['face']['score_thresh']
 
-    logger.info(f"{pname} 算法首次启动，更新人脸特征库")
+    can_update = True if main_id == 1 and process_id == 1 else False
+    faceRegMgr: IFaceRegMgr = FaceRegMgr(face_update_path, can_update)
 
-    face_model = face_reboot(face_update_path, main_id, process_id, face_model=None)  # 加载人脸识别模型
+    logger.info(f'{pname} launch!')
 
     if faceEvent is not None:
         faceEvent.set()  # 初始化结束
 
     try:
         while True:
-            if not faceQueue.empty():
-                # print(f"face len: {len(p_qface)}")
-                if not os.path.exists(face_update_path):  # 特征库存在才进行检测
-                    time.sleep(sleep_time)
-                    continue
+            for i in range(faceReq_queue_list.__len__()):
+                if not faceReq_queue_list[i].empty():
+                    pack_req_data = faceReq_queue_list[i].get()
 
-                val_dict = faceQueue.get()
-                # 初始化一些所需变量
-                # print(f"val_dict: {val_dict}")
-                best_save_path = val_dict['record_photo_url']
-                iter_path = best_save_path
+                    obj_id, img = FaceRegTool.unpack_req(pack_req_data)
 
-                per_id = 1
-                for i in range(per_img_count):
-                    if os.path.exists(iter_path):
-                        per_id, score = face_model.detect_image(iter_path)
-                        if per_id != 1:  # 非陌生人直接返回
-                            break
-                        else:  # 否则选取下一张图片
-                            iter_path = best_save_path.replace(".jpg", f"{i + 1}.jpg")
+                    if img is not None:
+                        per_id, score = faceRegMgr.inference(img)
+                        logger.info(
+                            f"{pname} 人脸识别结果 [obj:{obj_id} per: {per_id} score: {score:.2f}]")
+                        if per_id != 1 and score < score_thresh:
+                            # logger.info(f"{pname} obj_id:{obj_id} - per_id: {per_id} 识别分数过低被剔除: {score:.2f} < {score_thresh:.2f}")
+                            per_id = 1  # 设为Unknown
                     else:
-                        break
+                        logger.error(f"{pname} 人脸图片获取失败!")
+                        continue
 
-                if is_debug:
-                    logger.info(f"{pname} detect face! obj: {val_dict['obj_id']} match result:{per_id}")  # 人脸预测里面会打印日志
-                    print(f"{pname} detect face! obj: {val_dict['obj_id']} match result:{per_id}")
+                    if per_id == 1:
+                        continue
 
-                if val_dict['is_sql']:
-                    if not p_qsql.full():
-                        p_qsql.put({
-                            "run_mode": val_dict['run_mode'],
-                            "record_time": val_dict['record_time'],
-                            "recognize_cam_id": val_dict['recognize_cam_id'],
-                            "record_status": val_dict['record_status'],
-                            "record_num": 1,
-                            "record_photo_url": best_save_path,
-                            "personnel_id": per_id,
-                            "is_warning": 1 if per_id == 1 else 0,
-                            "record_video_url": val_dict['record_video_url'],
-                        })
-                    else:
-                        logger.error(f"{pname} Mysql Queue is full! Maybe MySQL is closed!")
-            else:
-                if not os.path.exists(face_update_path):  # 检测到特征库更新
-                    if is_debug:
-                        print(f"{pname} 检测到特征库变化，更新人脸特征库")
-                        logger.info(f"{pname} 检测到特征库变化，更新人脸特征库")
-                    face_model = face_reboot(face_update_path, main_id, process_id, face_model=face_model)  # 闲置时更新
+                    # logger.info(f"{pname} 识别成功! obj: {obj_id} match result:{per_id}")
+                    pack_rsp_data = FaceRegTool.pack_rsp(obj_id, per_id, score, img)
+                    faceRsp_queue_list[i].put(pack_rsp_data)
 
-                if esc_event.is_set():
+            else:  # 检测特征库更新，是否退出进程
+                if faceRegMgr.check_and_update():
+                    logger.info(f"{pname} 检测到特征库变化，更新人脸特征库")
+
+                if escEvent.is_set():
                     logger.info(f"{pname} Exit!")
-                    print(f"{pname} Exit!")
                     return
 
                 time.sleep(sleep_time)  # 暂停1s，让出控制权
+
     except Exception as e:
-        print(f"{pname} Error:{e}")
-        logger.error(f"{pname} Error:{e}")
+        logger.error(f"{pname} Error:{traceback.format_exc()}")
+
+
+if __name__ == "__main__":
+    main_yaml = ConfigTool.load_main_config("exps/custom/main1.yaml")
+    ConfigTool.load_log_config(main_yaml)
+
+    main_id = main_yaml['main_id']
+    face_update_path = main_yaml['face']['update_path']
+
+    faceRegMgr: IFaceRegMgr = FaceRegMgr(face_update_path, True)
+    # 使用str加载
+    # per_id, score = faceRegMgr.inference("./assets/face/test/test1_4.jpg")
+
+    # 使用ndarry加载
+
+    # Load an image using OpenCV
+    image = cv2.imread("./assets/face/test/test1_4.jpg")  # Replace 'your_image.jpg' with your image file path
+
+    # Check if the image was loaded successfully
+    if image is not None:
+        # Convert the image to a NumPy array
+        image_array = np.array(image)
+        # Now, you can manipulate and process the image using NumPy operations
+        # Display the shape of the image array
+        print("Image shape:", image_array.shape)
+    else:
+        print("Image not found or could not be loaded.")
+
+    per_id, score = faceRegMgr.inference(image)
+    logger.info("人脸识别结果: " + str(per_id) + " 分数: " + str(score))
+
+
+
+
+
 

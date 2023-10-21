@@ -7,6 +7,8 @@ import numpy as np
 
 __all__ = ["vis"]
 
+from tools.lzc.count.framework.CountMgr import CountMgr
+
 
 def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
@@ -49,7 +51,7 @@ def get_color(idx):
     return color
 
 
-def plot_tracking(im, tlwhs, obj_ids, scores=None, frame_id=0, fps=0., ids2=None):
+def plot_tracking(im, tlwhs, obj_ids, scores=None, frame_id=0, fps=0., ids2=None, per_ids: dict=None):
     # im = np.ascontiguousarray(np.copy(image))
     im_h, im_w = im.shape[:2]
 
@@ -71,9 +73,13 @@ def plot_tracking(im, tlwhs, obj_ids, scores=None, frame_id=0, fps=0., ids2=None
         intbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
         obj_id = int(obj_ids[i])
         if scores is not None:
-            id_text = '{}_{:.2f}'.format(int(obj_id), scores[i])
+            id_text = '{}:{:.2f}'.format(int(obj_id), scores[i])
         else:
             id_text = '{}'.format(int(obj_id))
+
+        if per_ids and per_ids.__contains__(obj_id):
+            id_text = id_text + ', {}'.format(int(per_ids[obj_id].current_per_id))
+
         if ids2 is not None:
             id_text = id_text + ', {}'.format(int(ids2[i]))
         color = get_color(abs(obj_id))
