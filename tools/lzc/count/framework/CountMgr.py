@@ -334,6 +334,7 @@ class CountMgr(ICountMgr):
                 "reg_interval": main_yaml['cam']['reg_interval'],
                 "reg_count_thresh": main_yaml['cam']['reg_count_thresh'],
                 "reg_score_expect": main_yaml['cam']['reg_score_expect'],
+                "reg_likely_match": main_yaml['cam']['reg_likely_match'],
                 # 其他
                 "save_path": output_dir,
                 "qface_req": qface_req,

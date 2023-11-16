@@ -102,6 +102,8 @@ def run():
     # ---------- 子进程相关 ----------
     # 设置进程开启方式
     # multiprocessing.set_start_method('spawn')
+    if sys.platform.startswith('linux'):  # linux默认fork，但fork不支持cuda
+        multiprocessing.set_start_method('spawn')
     # 创建事件对象
     escEvent = Manager().Event()  # 程序终止事件
     sqlEvent = Manager().Event()  # 数据库初始化完成事件

@@ -70,7 +70,7 @@ class CountItem:
         self.per_id = 1  # 默认为陌生人
         self.current_per_id = 1  # 当前识别情况 (用于可视化)
         self.score = 0  # 识别分数
-        self.best_face_img = None  # 最好的识别截图
+        self.best_face_img = self._get_track_img(running_data.im, running_data.tlwh, data.border)  # 最好的识别截图
         self.reg_results.clear()
         self.last_face_req_frame = running_data.frame_id
         self.req_count = 0  # 当前发送的face req数量，每收到一次响应会-1
@@ -141,11 +141,15 @@ class CountItem:
 
     # 人脸识别成功事件，会根据情况将图片写入本地
     def process_reg_rsp(self, per_id, score, face_img):
-        self.current_per_id = per_id
         self.req_count -= 1
         # print(f"receive face rsp: {self.obj_id} {self.countMgr.running_data.frame_id}")
         if per_id == 1:  # 陌生人则返回
             return
+
+        if self.per_id == 1:
+            self.current_per_id = per_id
+        else:
+            self.current_per_id = self.per_id
 
         if not self.reg_results.__contains__(per_id):
             self.reg_results[per_id] = 1
@@ -194,14 +198,13 @@ class CountItem:
         if data.run_mode == 0:
             self._on_keliu_success_quit(data, running_data)  # 直接发送消息给数据库
         else:
+            self.face_state = FaceStateEnum.CanSend  # 标记为可发消息的状态
             if self.per_id == 1:  # 如果是陌生人，则继续尝试识别
-                self.face_state = FaceStateEnum.CanSend  # 标记为可发消息的状态
                 # 立即发送一次人脸识别请求
                 if self._send_reg_req(self.obj_id, running_data.im, running_data.tlwh):
                     self.last_face_req_frame = running_data.frame_id
                     self.req_count += 1
             else:  # 如果不是陌生人，则立即发送给数据库
-                self.face_state = FaceStateEnum.CanSend
                 self._on_renlian_succe_quit()
 
     def _on_keliu_success_quit(self, data: CountMgrData, running_data: CountMgrRunningData):
@@ -222,14 +225,8 @@ class CountItem:
             self.face_state = FaceStateEnum.Sended
             data: CountMgrData = self.countMgr.data
 
-            # # 人脸识别优化，增大匹配几率（视情况开启）：
-            # #   如果self.per_id==1，则在符合阈值的结果中挑选最出现次数最多的
-            # if self.per_id == 1:
-            #     # 取出字典中值最大的元素对应的键
-            #     if self.reg_results.__len__() > 0:
-            #         # 使用max函数和字典的values方法找到最大的值，然后直接使用该最大值在字典中查找对应的键
-            #         max_value = max(self.reg_results.values())
-            #         self.per_id = next(key for key, value in self.reg_results.items() if value == max_value)
+            if data.reg_likely_match:  # 最优匹配算法
+                self._likely_match()
 
             pack_data = SqlTool.pack_renlian_data(
                 record_time=self.begin_time,
@@ -244,6 +241,16 @@ class CountItem:
             logger.info(f"{data.cam_name} {self.obj_id}:发送renlian数据到数据库 per_id={self.per_id} {self.begin_zone}")
             self._send_sql_req(data, pack_data)
 
+    def _likely_match(self):
+        # 人脸识别优化，增大匹配几率（视情况开启）：
+        #   如果self.per_id==1，则在符合阈值的结果中挑选最出现次数最多的
+        if self.per_id == 1 and self.reg_results.__len__() > 0:
+            # 取出字典中值最大的元素对应的键
+            # 使用max函数和字典的values方法找到最大的值，然后直接使用该最大值在字典中查找对应的键
+            max_value = max(self.reg_results.values())
+            self.per_id = next(key for key, value in self.reg_results.items() if value == max_value)
+            logger.info(f"{self.countMgr.data.cam_name} {self.obj_id}: 产生最优匹配 per_id={self.per_id}")
+
     def _send_sql_req(self, data: CountMgrData, pack_data: dict):
         # 传递给数据库进程
         if data.qsql_list:
@@ -254,21 +261,16 @@ class CountItem:
             index_of_min_element = lst.index(min_element)
             data.qsql_list[min_element].put(pack_data)
 
-    # 成功离开预处理
+    # 成功离开预处理: 生成抓拍图
     def _create_shot_img(self, data: CountMgrData, running_data: CountMgrRunningData):
-        # 生成兜底图
         # logger.info(f"{data.cam_name} 生成候选图: {self.obj_id}_{self.begin_zone.name}.jpg")
         if data.run_mode == 0:
             self.img_save_path = os.path.join(self.save_dir, f"{self.obj_id}_{self.begin_zone.name}.jpg")
-            cv2.imwrite(self.img_save_path, self._get_track_img(running_data.im, running_data.tlwh, data.border))
         else:
             self.img_save_path = os.path.join(
                 self.save_dir, f"{self.obj_id}_{self.begin_zone.name}_{self.per_id}_{self.score:.2f}.jpg.jpg")
-            if self.per_id == 1:
-                cv2.imwrite(self.img_save_path, self._get_track_img(running_data.im, running_data.tlwh, data.border))
-            else:
-                cv2.imwrite(self.img_save_path, self.best_face_img)
 
+        cv2.imwrite(self.img_save_path, self.best_face_img)
 
     # 清除不合法状态下的资源
     def on_release(self, is_clear):

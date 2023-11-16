@@ -64,7 +64,7 @@ def write_process(qframe, cam_event, esc_event, main_yaml, cam_yaml) -> None:
     real_frame = 0
     drop_flag = 0
 
-    logger.info(f"{pname} work! video stream from: {cam_url}!")
+    logger.info(f"{pname} work! video stream from: {cam_url} fps: {frame_fps}")
     while True:
         try:
             if cap.isOpened():

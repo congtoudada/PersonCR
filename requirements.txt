@@ -19,7 +19,7 @@ PyMySQL
 PyYaml
 pycocotools
 cython
-pymysql-pooling
+pymysql-pool
 aiohttp
 # cython_bbox # windows may be error
 
