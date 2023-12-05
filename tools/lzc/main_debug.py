@@ -1,4 +1,5 @@
 import multiprocessing
+import os.path
 import time
 
 from tools.lzc.process.cam_process import *
@@ -93,7 +94,8 @@ def run():
     args = make_parser().parse_args()
 
     # 加载yaml主配置
-
+    if not os.path.exists("assets/running"):
+        os.mkdir("assets/running")
     main_yaml = ConfigTool.load_main_config(f"exps/custom/debug/{args.main}.yaml")
 
     # 初始化日志模块

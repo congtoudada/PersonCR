@@ -91,7 +91,8 @@ def run():
     args = make_parser().parse_args()
 
     # 加载yaml主配置
-
+    if not os.path.exists("assets/running"):
+        os.mkdir("assets/running")
     main_yaml = ConfigTool.load_main_config(f"exps/custom/release/{args.main}.yaml")
 
     # 初始化日志模块
