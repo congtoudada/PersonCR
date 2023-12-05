@@ -180,7 +180,7 @@ def main(exp, args, num_gpu):
 
     if not args.speed and not args.trt:
         if args.ckpt is None:
-            ckpt_file = os.path.join(file_name, "best_ckpt.pth.tar")
+            ckpt_file = os.path.join(file_name, "yolox_s_head.pth.tar")
         else:
             ckpt_file = args.ckpt
         logger.info("loading checkpoint")

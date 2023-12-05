@@ -53,7 +53,7 @@ args1:
   path: assets/renlian/renlian1.mp4 # 取流地址
   save_result: False # 是否存储视频
   exp_file: exps/custom/yolox_s_head.py # yolox配置文件存储路径
-  ckpt: pretrained/head/best_ckpt.pth # 模型权重存放路径
+  ckpt: pretrained/head/yolox_s_head.pth # 模型权重存放路径
   conf: 0.6 # 预测置信度
   nms: 0.65 # 非极大值抑制
   fps: 25 # Bytetrack帧率
@@ -65,7 +65,7 @@ args1:
 # 正脸追踪
 args2:
   exp_file: exps/custom/yolox_s_renlian.py # yolox配置文件存储路径
-  ckpt: pretrained/renlian/best_ckpt.pth # 权重文件
+  ckpt: pretrained/renlian/yolox_s_head.pth # 权重文件
   conf: 0.25 # 预测置信度
   nms: 0.65 # 非极大值抑制
   aspect_ratio_thresh: 2 # 过滤掉大于指定宽高比的bounding box

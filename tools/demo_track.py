@@ -329,7 +329,7 @@ def main(exp, args):
 
     if not args.trt:
         if args.ckpt is None:
-            ckpt_file = osp.join(output_dir, "best_ckpt.pth.tar")
+            ckpt_file = osp.join(output_dir, "yolox_s_head.pth.tar")
         else:
             ckpt_file = args.ckpt
         logger.info("loading checkpoint")

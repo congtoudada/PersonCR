@@ -38,7 +38,7 @@ args1:
   path: assets/keliu/keliu1_3.mp4 # 取流地址 # ADMIN123
   save_result: True # 是否存储视频！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
   exp_file: exps/custom/yolox_s_keliu.py # yolox配置文件存储路径
-  ckpt: pretrained/keliu/best_ckpt.pth
+  ckpt: pretrained/keliu/yolox_s_keliu.pth
   conf: 0.67 # 预测置信度
   nms: 0.7 # 非极大值抑制
   fps: 25 # Bytetrack帧率

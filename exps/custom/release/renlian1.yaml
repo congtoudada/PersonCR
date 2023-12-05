@@ -38,7 +38,7 @@ args1:
   # path: rtsp://admin:hik12345@192.168.1.64:554/h264/ch1/main/av_stream_renlian1
   save_result: True # 是否存储视频！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
   exp_file: exps/custom/yolox_s_head.py # yolox配置文件存储路径
-  ckpt: pretrained/head/best_ckpt.pth
+  ckpt: pretrained/head/yolox_s_head.pth
   conf: 0.7 # 预测置信度
   nms: 0.65 # 非极大值抑制
   fps: 25 # Bytetrack帧率

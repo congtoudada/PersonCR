@@ -40,5 +40,5 @@ def save_checkpoint(state, is_best, save_dir, model_name=""):
     filename = os.path.join(save_dir, model_name + "_ckpt.pth.tar")
     torch.save(state, filename)
     if is_best:
-        best_filename = os.path.join(save_dir, "best_ckpt.pth.tar")
+        best_filename = os.path.join(save_dir, "yolox_s_head.pth.tar")
         shutil.copyfile(filename, best_filename)
