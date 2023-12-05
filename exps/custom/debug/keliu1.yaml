@@ -1,0 +1,55 @@
+# 0表示客流模式
+run_mode: 0
+# 相机名称（用于辅助Debug）
+cam_name: keliu1
+# 算法模式 0:左上角检测 1:中心点检测
+cal_mode: 1
+# 检测模式 0:常规 1:里外包围盒(只支持单向检测，only_dir不可为1)
+det_mode: 0
+# 相机id
+cam_id: 1
+# 中线位置比例 (0:up_ratio 1:down_ration)
+center_ratio: 0.5
+# 计数检测参数
+# 0:detect_up 1:detect_down 2:buffer_up 3:buffer_down
+# 4:detect_left 5:detect_right 6:buffer_left 7:buffer_right
+zone:
+  - 0.3 # detect_up
+  - 0.41 # detect_down
+  - 0.28 # buffer_up
+  - 0.43 # buffer_down
+  - 0 # detect_left
+  - 1 # detect_right
+  - 0 # buffer_left
+  - 1 # buffer_right
+# 是否竖直检测
+is_vertical: True
+# 是否反向
+#   [以竖直方向为例：默认:往上离开(Out) 反向:往下离开(Out)]
+#   [以水平方向为例：默认:往左离开(Out) 反向:往右离开(Out)]
+is_reverse: True
+# 只检测一个方向 1:双向检测 2:只检测进 3:只检测出
+only_dir: 1
+
+# args参数重载
+args1:
+  expn: keliu
+  # path: rtsp://admin:ADMIN123@180.136.11.17:554/h264/ch1/main/av_stream_keliu1
+  path: assets/keliu/keliu1_3.mp4 # 取流地址 # ADMIN123
+  save_result: True # 是否存储视频！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+  exp_file: exps/custom/yolox_s_keliu.py # yolox配置文件存储路径
+  ckpt: pretrained/keliu/best_ckpt.pth
+  conf: 0.67 # 预测置信度
+  nms: 0.7 # 非极大值抑制
+  fps: 25 # Bytetrack帧率
+  track_thresh: 0.5 # 追踪置信度
+  track_buffer: 25 # 追踪缓存
+  match_thresh: 0.8 # 匹配置信度
+  aspect_ratio_thresh: 5 # 过滤掉大于指定宽高比的bounding box
+
+
+
+
+
+
+

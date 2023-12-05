@@ -94,7 +94,7 @@ def run():
 
     # 加载yaml主配置
 
-    main_yaml = ConfigTool.load_main_config(f"exps/custom/test/{args.main}.yaml")
+    main_yaml = ConfigTool.load_main_config(f"exps/custom/debug/{args.main}.yaml")
 
     # 初始化日志模块
     ConfigTool.load_log_config(main_yaml, is_clean=True)
@@ -182,7 +182,7 @@ def run():
     faceEvent.wait()
     logger.info("人脸识别模块加载完成！")
 
-    cam_yaml = ConfigTool.load_cam_config(cam_file=f"exps/custom/test/{cam_list[0]}.yaml")
+    cam_yaml = ConfigTool.load_cam_config(cam_file=f"exps/custom/debug/{cam_list[0]}.yaml")
 
     write_read_process(faceReq_queue_list[0], faceRsp_queue_list[0],
                 sql_queue_list, escEvent, args, main_yaml, cam_yaml)

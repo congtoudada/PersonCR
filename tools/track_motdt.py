@@ -80,7 +80,7 @@ def make_parser():
         dest="test",
         default=False,
         action="store_true",
-        help="Evaluating on test-dev set.",
+        help="Evaluating on test-debug set.",
     )
     parser.add_argument(
         "--speed",

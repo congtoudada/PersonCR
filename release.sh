@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd /root/dut/PersonCR
+cd /home/jetson/dut/PersonCR
 python tools/lzc/main_release.py

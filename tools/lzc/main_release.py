@@ -92,7 +92,7 @@ def run():
 
     # 加载yaml主配置
 
-    main_yaml = ConfigTool.load_main_config(f"exps/custom/{args.main}.yaml")
+    main_yaml = ConfigTool.load_main_config(f"exps/custom/release/{args.main}.yaml")
 
     # 初始化日志模块
     ConfigTool.load_log_config(main_yaml, is_clean=True)
@@ -182,7 +182,7 @@ def run():
     logger.info("人脸识别模块加载完成！")
 
     for i in range(cam_count):
-        cam_yaml = ConfigTool.load_cam_config(cam_file=f"exps/custom/{cam_list[i]}.yaml")
+        cam_yaml = ConfigTool.load_cam_config(cam_file=f"exps/custom/release/{cam_list[i]}.yaml")
         # 读视频流进程
         Process(target=write_process,
                 args=(qframe_list[i], cam_event_list[i], escEvent, main_yaml, cam_yaml),
