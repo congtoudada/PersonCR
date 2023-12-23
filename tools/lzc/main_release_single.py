@@ -2,6 +2,7 @@
 import multiprocessing
 
 from tools.lzc.process.cam_process import *
+from tools.lzc.process.cam_single import cam_single_process
 from tools.lzc.process.sql_process import *
 from tools.lzc.process.face_process import *
 from multiprocessing import Process, Manager
@@ -182,11 +183,11 @@ def run(args):
     for i in range(cam_count):
         cam_yaml = ConfigTool.load_cam_config(cam_file=f"exps/custom/release/{cam_list[i]}.yaml")
         # 读视频流进程
-        Process(target=write_process,
-                args=(qframe_list[i], cam_event_list[i], escEvent, main_yaml, cam_yaml),
+        Process(target=cam_single_process,
+                args=(faceReq_queue_list[i], faceRsp_queue_list[i], sql_queue_list, escEvent, args, main_yaml, cam_yaml),
                 daemon=True).start()
 
-        time.sleep(cam_interval / 2.0)  # 避免并发过高,间隔cam_interval秒开一个
+        time.sleep(cam_interval / 2.0)  # 避免并发过高,间隔cam_interval/2.0秒开一个
 
     # ---------- 主进程相关 ----------
     # 写文件用于监听，文件删除算法终止
