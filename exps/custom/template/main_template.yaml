@@ -9,7 +9,7 @@ running_file: ./assets/running/main.pkl # 项目运行文件，运行时生成�
 
 # 2.相机配置
 cam:
-  # 取流视频帧缓存队列上限
+  # 取流视频帧缓存队列上限（多进程读写视频流时有效，即使用main_release_multi.py）
   frame_queue_capacity: 10
   # 回放视频帧缓存上限 (决定了抓拍视频从之前帧开始的程度，该值越大显存占用越大）
   frame_history_capacity: 10

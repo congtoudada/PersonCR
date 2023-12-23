@@ -188,7 +188,7 @@ def write_read_process(qface_req, qface_rsp, qsql_list, esc_event, args, main_ya
                 if args.save_result:
                     vid_writer.write(online_im)
 
-                if (show_window):
+                if show_window:
                     online_im = cv2.resize(online_im, (window_width, window_height))
                     cv2.imshow("debug window", online_im)
 

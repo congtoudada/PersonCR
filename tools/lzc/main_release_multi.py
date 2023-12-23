@@ -1,3 +1,4 @@
+# 相机读写视频流分两个进程
 import multiprocessing
 
 from tools.lzc.process.cam_process import *

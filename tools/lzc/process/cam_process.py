@@ -75,7 +75,7 @@ def write_process(qframe, cam_event, esc_event, main_yaml, cam_yaml) -> None:
                 else:
                     # 自适应主动丢帧
                     now_jump = int(qframe.qsize() / jump_thresh)
-                    if now_jump > 0:
+                    if now_jump > 0 and real_frame % 10 == 0:
                         logger.warning(f"{pname} 服务器存在性能瓶颈，自适应丢帧: {now_jump}！")
                     for i in range(now_jump):
                         cap.grab()
@@ -94,6 +94,7 @@ def write_process(qframe, cam_event, esc_event, main_yaml, cam_yaml) -> None:
                             qframe.put(frame)
                             # real_frame += 1
 
+                    real_frame += 1
                 # if real_frame % 200 == 0 and is_cal_frame:
                 #     print("video stream:", frame.shape)
                 #     logger.info(f"{pname} real frame num: {real_frame}. queue.len: {qframe.qsize()}")
@@ -147,7 +148,7 @@ def read_process(qframe, cam_event, qface_req, qface_rsp, qsql_list, esc_event, 
     height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
     fps = cap.get(cv2.CAP_PROP_FPS)
     cap.release()
-    timestamp = time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
+    # timestamp = time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
 
     # save_path: YOLOX_outputs/renlian/test01/test01.mp4
     save_path = osp.join(output_dir, f"{osp.basename(output_dir)}.mp4")

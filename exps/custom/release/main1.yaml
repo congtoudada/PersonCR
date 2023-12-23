@@ -1,7 +1,7 @@
 # 1.全局配置
 enable_log: True # 全局日志控制，决定是否将消息打印到控制台和日志文件中
 enable_debug: True # 全局DEBUG控制，决定是否将消息打印到控制台(如果enable_log为False,该项无效)
-debug_mode: True # DEBUG模式运行 (如果为本地视频则可以开启DEBUG模式，避免读取视频过快导致大量丢帧）
+debug_mode: False # DEBUG模式运行 (如果为本地视频则可以开启DEBUG模式，避免读取视频过快导致大量丢帧）
 main_id: 1 # 进程标识
 
 # 2.相机配置
