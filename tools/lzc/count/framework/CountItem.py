@@ -192,11 +192,9 @@ class CountItem:
     def on_success_quit(self, data: CountMgrData, running_data: CountMgrRunningData):
         # 设为Dying状态
         self.state = CountItemStateEnum.Dying
-        # 生成截图
-        self._create_shot_img(data, running_data)
 
         if data.run_mode == 0:
-            self._on_keliu_success_quit(data, running_data)  # 直接发送消息给数据库
+            self._on_keliu_success_quit()  # 直接发送消息给数据库
         else:
             self.face_state = FaceStateEnum.CanSend  # 标记为可发消息的状态
             if self.per_id == 1:  # 如果是陌生人，则继续尝试识别
@@ -207,7 +205,10 @@ class CountItem:
             else:  # 如果不是陌生人，则立即发送给数据库
                 self._on_renlian_succe_quit()
 
-    def _on_keliu_success_quit(self, data: CountMgrData, running_data: CountMgrRunningData):
+    def _on_keliu_success_quit(self):
+        data: CountMgrData = self.countMgr.data
+        # 生成截图
+        self._create_shot_img(data.run_mode)
         pack_data = SqlTool.pack_keliu_data(
             record_time=self.begin_time,
             flow_cam_id=data.cam_id,
@@ -225,8 +226,12 @@ class CountItem:
             self.face_state = FaceStateEnum.Sended
             data: CountMgrData = self.countMgr.data
 
-            if data.reg_likely_match:  # 最优匹配算法
+            # 最优匹配算法
+            if data.reg_likely_match:
                 self._likely_match()
+
+            # 生成截图
+            self._create_shot_img(data.run_mode)
 
             pack_data = SqlTool.pack_renlian_data(
                 record_time=self.begin_time,
@@ -262,13 +267,13 @@ class CountItem:
             data.qsql_list[min_element].put(pack_data)
 
     # 成功离开预处理: 生成抓拍图
-    def _create_shot_img(self, data: CountMgrData, running_data: CountMgrRunningData):
+    def _create_shot_img(self, run_mode):
         # logger.info(f"{data.cam_name} 生成候选图: {self.obj_id}_{self.begin_zone.name}.jpg")
-        if data.run_mode == 0:
+        if run_mode == 0:
             self.img_save_path = os.path.join(self.save_dir, f"{self.obj_id}_{self.begin_zone.name}.jpg")
         else:
             self.img_save_path = os.path.join(
-                self.save_dir, f"{self.obj_id}_{self.begin_zone.name}_{self.per_id}_{self.score:.2f}.jpg.jpg")
+                self.save_dir, f"{self.obj_id}_{self.begin_zone.name}_{self.per_id}_{self.score:.2f}.jpg")
 
         cv2.imwrite(self.img_save_path, self.best_face_img)
 

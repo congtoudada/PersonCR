@@ -10,6 +10,7 @@ cam:
   list:
 #     - keliu1
      - renlian1
+     - renlian2
 
 # 3.人脸识别配置
 face:
