@@ -111,76 +111,72 @@ def cam_single_process(qface_req, qface_rsp, qsql_list, esc_event, args, main_ya
     # -------------------------------- 算法运行 -------------------------------
     while True:
         try:
-            if cap.isOpened():
-                # 主动丢帧
-                drop_flag += 1
-                if drop_flag >= drop_interval:
-                    drop_flag = 0
-                    cap.grab()
-                else:
-                    status, frame = cap.read()
-                    if status:  # 如果成功获取视频帧
-                        frame_id += 1
-                        now = time.time()
-
-                        # DEBUG打印
-                        if debug_mode and frame_id % 20 == 0:
-                            logger.info(
-                                f"{pname} : Processing frame {frame_id} with {1. / max(1e-5, timer.average_time):.2f} fps")
-                            # timer.clear()
-
-                        # 目标检测
-                        outputs, img_info = predictor.inference(frame, timer)
-
-                        # 目标追踪
-                        if outputs[0] is not None:
-                            outputs[0] = outputs[0][outputs[0][:, 6] == 0, :]  # 都先追踪人，保留boundingbox
-
-                            online_targets = tracker.update(outputs[0], [img_info['height'], img_info['width']],
-                                                            exp.test_size)
-                            online_tlwhs = []
-                            online_ids = []
-                            online_scores = []
-                            for t in online_targets:
-                                tlwh = t.tlwh
-                                tid = t.track_id
-                                vertical = tlwh[2] / tlwh[3] > args.aspect_ratio_thresh
-                                if tlwh[2] * tlwh[3] > args.min_box_area and not vertical:
-                                    online_tlwhs.append(tlwh)
-                                    online_ids.append(tid)
-                                    online_scores.append(t.score)
-                            timer.toc()
-
-                            # Update
-                            online_im = countMgr.update(img_info['raw_img'], online_tlwhs, online_ids, online_scores,
-                                                        now,
-                                                        frame_id)
-
-                            # 画监测区域（由内部判断是否画）
-                            online_im = countMgr.draw(online_im)
-
-                            # 可视化线框
-                            if is_vis:
-                                online_im = plot_tracking(
-                                    online_im, online_tlwhs, online_ids, scores=online_scores, frame_id=frame_id + 1,
-                                    fps=1. / timer.average_time,
-                                    per_ids=None if run_mode == 0 else countMgr.get_container()
-                                )  # 画追踪boundingbox
-                        else:
-                            timer.toc()
-                            online_im = img_info['raw_img']
-                            if frame_id > int(sys.maxsize * 0.999):
-                                frame_id = 0
-
-                        # global Update
-                        countMgr.global_update(img_info['raw_img'], now, frame_id)
-
-                        if args.save_result:
-                            vid_writer.write(online_im)
+            # 主动丢帧
+            drop_flag += 1
+            if drop_flag >= drop_interval:
+                drop_flag = 0
+                cap.grab()
             else:
-                logger.error(f"{pname} video stream closed, Try to get video stream!")
-                time.sleep(1)
-                cap = cv2.VideoCapture(cam_url)
+                status, frame = cap.read()
+                if status:  # 如果成功获取视频帧
+                    frame_id += 1
+                    now = time.time()
+
+                    # DEBUG打印
+                    if debug_mode and frame_id % 20 == 0:
+                        logger.info(
+                            f"{pname} : Processing frame {frame_id} with {1. / max(1e-5, timer.average_time):.2f} fps")
+                        # timer.clear()
+
+                    # 目标检测
+                    outputs, img_info = predictor.inference(frame, timer)
+
+                    # 目标追踪
+                    if outputs[0] is not None:
+                        outputs[0] = outputs[0][outputs[0][:, 6] == 0, :]  # 都先追踪人，保留boundingbox
+
+                        online_targets = tracker.update(outputs[0], [img_info['height'], img_info['width']],
+                                                        exp.test_size)
+                        online_tlwhs = []
+                        online_ids = []
+                        online_scores = []
+                        for t in online_targets:
+                            tlwh = t.tlwh
+                            tid = t.track_id
+                            vertical = tlwh[2] / tlwh[3] > args.aspect_ratio_thresh
+                            if tlwh[2] * tlwh[3] > args.min_box_area and not vertical:
+                                online_tlwhs.append(tlwh)
+                                online_ids.append(tid)
+                                online_scores.append(t.score)
+                        timer.toc()
+
+                        # Update
+                        online_im = countMgr.update(img_info['raw_img'], online_tlwhs, online_ids, online_scores,
+                                                    now,
+                                                    frame_id)
+
+                        # 画监测区域（由内部判断是否画）
+                        online_im = countMgr.draw(online_im)
+
+                        # 可视化线框
+                        if is_vis:
+                            online_im = plot_tracking(
+                                online_im, online_tlwhs, online_ids, scores=online_scores, frame_id=frame_id + 1,
+                                fps=1. / timer.average_time,
+                                per_ids=None if run_mode == 0 else countMgr.get_container()
+                            )  # 画追踪boundingbox
+                    else:
+                        timer.toc()
+                        online_im = img_info['raw_img']
+                        if frame_id > int(sys.maxsize * 0.999):
+                            frame_id = 0
+
+                    # global Update
+                    countMgr.global_update(img_info['raw_img'], now, frame_id)
+
+                    if args.save_result:
+                        vid_writer.write(online_im)
+
             # 监听退出
             if debug_mode:
                 time.sleep(1.0 / frame_fps)  # 读本地文件要用该行
